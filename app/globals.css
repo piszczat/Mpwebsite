@@ -2490,3 +2490,367 @@ a.tree-row {
   .areas-card ul { grid-template-columns: 1fr; }
   .architecture-flow { padding: 18px; }
 }
+
+/* Readability pass: small Visual Studio UI text is approximately 125% larger. */
+
+.vs-shell {
+  grid-template-rows: 34px 40px 42px minmax(0, 1fr) 28px;
+  font-size: 15px;
+}
+
+.vs-titlebar { font-size: 15px; }
+.vs-menubar { grid-template-columns: minmax(600px, 1fr) minmax(270px, 430px) minmax(150px, .55fr); }
+.menu-items { gap: 18px; }
+.ide-search { height: 29px; font-size: 13px; }
+.vs-toolbar { gap: 8px; }
+.run-button, .toolbar-command { height: 31px; font-size: 13px; }
+.toolbar-select { height: 29px; min-width: 102px; font-size: 13px; }
+.vs-workbench { grid-template-columns: 360px minmax(0, 1fr); }
+.solution-panel { grid-template-rows: 40px 36px minmax(0, 1fr) auto; }
+.panel-title { min-height: 40px; font-size: 12.5px; }
+.solution-search { height: 29px; font-size: 12px; }
+.tree-row { min-height: 28px; gap: 7px; }
+.tree-row svg { width: 17px; height: 17px; }
+.aot-object-icon { width: 24px; height: 18px; flex-basis: 24px; font-size: 8px; }
+.properties-panel dl > div { min-height: 31px; grid-template-columns: 105px 1fr; }
+.properties-panel dt, .properties-panel dd { font-size: 12.5px; }
+.editor-region { grid-template-rows: 34px minmax(0, 1fr) 175px; }
+.document-path { font-size: 12.5px; }
+.editor-tabs { grid-template-rows: 42px minmax(0, 1fr); }
+.document-tabs, .document-tab { height: 42px !important; }
+.document-tab { min-width: 190px; font-size: 13.5px !important; }
+.code-line { min-height: 28px; grid-template-columns: 62px minmax(0, 1fr); font-size: 16px; line-height: 28px; }
+.peek-title { min-height: 39px; font-size: 12.5px; }
+.peek-signature { font-size: 15px; }
+.peek-body > p { font-size: 18px; }
+.case-list-heading small { font-size: 12px; }
+.case-list > button > span { font-size: 10px; }
+.case-list > button strong { font-size: 15px; }
+.case-list > button small { font-size: 11px; }
+.case-detail-header span, .case-detail-header strong, .case-detail-header em { font-size: 12px; }
+.case-flow section > span { font-size: 11px; }
+.case-flow h2 { font-size: 20px; }
+.case-flow p { font-size: 13.5px; }
+.case-code-signature { font-size: 13.5px; }
+.contact-copy > p, .page-hero p { font-size: 17px; }
+.contact-links span, .form-title, .page-hero > span, .experience-card > span, .experience-profile > span, .architecture-heading span { font-size: 10.5px; }
+.contact-links strong { font-size: 13.5px; }
+.contact-form label > span { font-size: 12.5px; }
+.contact-form input, .contact-form textarea { font-size: 15px; }
+.contact-form input { height: 42px; }
+.contact-form button { height: 43px; font-size: 14px; }
+.form-note { font-size: 12.5px; }
+.experience-profile > strong { font-size: 15px; }
+.experience-profile p { font-size: 13.5px; }
+.experience-profile > div { font-size: 12.5px; }
+.tag-cloud b { font-size: 11px; }
+.areas-card li { font-size: 12.5px; }
+.achievement-card li p { font-size: 12.5px; }
+.style-card strong, .wiki-card strong { font-size: 12.5px; }
+.style-card small, .architecture-step p { font-size: 11px; }
+.architecture-step article > span, .wiki-card > div { font-size: 10px; }
+.architecture-step h2 { font-size: 17px; }
+.wiki-card p { font-size: 13.5px; }
+.output-tabs { font-size: 11.5px; }
+.output-console { font-size: 12.5px; }
+.vs-statusbar { font-size: 12.5px; }
+
+.preference-controls {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 7px;
+}
+
+.theme-switch,
+.locale-switch {
+  height: 29px;
+  display: flex;
+  border: 1px solid #65458a;
+  background: #2a2033;
+}
+
+.locale-switch {
+  justify-self: auto;
+}
+
+.theme-switch button,
+.locale-switch button {
+  width: 38px;
+  border: 0;
+  border-right: 1px solid #51396c;
+  background: transparent;
+  color: #aa9ab9;
+  font: 11px Consolas, "Cascadia Mono", monospace;
+  cursor: pointer;
+}
+
+.theme-switch button:last-child,
+.locale-switch button:last-child {
+  border-right: 0;
+}
+
+.theme-switch button.active,
+.locale-switch button.active {
+  background: #6b3fa0;
+  color: #fff;
+}
+
+.tfvc-glyph {
+  min-width: 20px;
+  font: 700 15px Consolas, "Cascadia Mono", monospace;
+  text-align: center;
+}
+
+.vs-statusbar strong {
+  font-weight: 600;
+}
+
+.tfvc-workspace {
+  padding-right: 8px;
+  border-right: 1px solid rgba(255,255,255,.28);
+}
+
+/* Light Visual Studio theme */
+
+.vs-shell[data-theme="light"] {
+  --background: #f5f5f5;
+  --foreground: #252526;
+  --card: #ffffff;
+  --card-foreground: #252526;
+  --popover: #ffffff;
+  --popover-foreground: #252526;
+  --secondary: #e9e9e9;
+  --secondary-foreground: #222;
+  --muted: #ececec;
+  --muted-foreground: #606060;
+  --border: #cfcfcf;
+  --input: #bdbdbd;
+  --vs-bg: #f7f7f8;
+  --vs-deep: #e8e8ea;
+  --vs-panel: #f1f1f2;
+  --vs-panel-alt: #ebebec;
+  --vs-line: #cfcfd2;
+  --vs-line-soft: #dddddf;
+  --vs-text: #252526;
+  --vs-muted: #5f5f62;
+  --vs-faint: #858589;
+  --syntax-blue: #005fb8;
+  --syntax-cyan: #267f99;
+  --syntax-yellow: #795e26;
+  --syntax-orange: #a31515;
+  --syntax-green: #008000;
+  --syntax-purple: #af00db;
+  --syntax-lightblue: #001080;
+  background: var(--vs-bg);
+  color: var(--vs-text);
+}
+
+.vs-shell[data-theme="light"] .vs-menubar,
+.vs-shell[data-theme="light"] .vs-toolbar,
+.vs-shell[data-theme="light"] .solution-panel,
+.vs-shell[data-theme="light"] .properties-panel,
+.vs-shell[data-theme="light"] .document-tabs,
+.vs-shell[data-theme="light"] .output-panel {
+  background: #eeeeef;
+  color: #2c2c2d;
+}
+
+.vs-shell[data-theme="light"] .menu-items,
+.vs-shell[data-theme="light"] .run-button,
+.vs-shell[data-theme="light"] .toolbar-command,
+.vs-shell[data-theme="light"] .panel-title,
+.vs-shell[data-theme="light"] .tree-row,
+.vs-shell[data-theme="light"] .properties-panel dd,
+.vs-shell[data-theme="light"] .document-tab,
+.vs-shell[data-theme="light"] .output-console {
+  color: #343437 !important;
+}
+
+.vs-shell[data-theme="light"] .ide-search,
+.vs-shell[data-theme="light"] .toolbar-select,
+.vs-shell[data-theme="light"] .solution-search {
+  border-color: #b9b9bc;
+  background: #fff;
+  color: #525257;
+}
+
+.vs-shell[data-theme="light"] .tree-row:hover {
+  background: #e1e7ec;
+}
+
+.vs-shell[data-theme="light"] .tree-row.selected {
+  background: #cde5f7;
+  color: #111 !important;
+}
+
+.vs-shell[data-theme="light"] .aot-root,
+.vs-shell[data-theme="light"] .properties-panel dl > div,
+.vs-shell[data-theme="light"] .properties-panel dd,
+.vs-shell[data-theme="light"] .document-path,
+.vs-shell[data-theme="light"] .document-tabs,
+.vs-shell[data-theme="light"] .output-tabs {
+  border-color: #ceced1;
+}
+
+.vs-shell[data-theme="light"] .properties-panel dt,
+.vs-shell[data-theme="light"] .document-path,
+.vs-shell[data-theme="light"] .document-path span:last-child {
+  color: #5e5e62;
+}
+
+.vs-shell[data-theme="light"] .editor-region,
+.vs-shell[data-theme="light"] .editor-canvas,
+.vs-shell[data-theme="light"] .document-tab[data-state="active"],
+.vs-shell[data-theme="light"] .document-tab.static,
+.vs-shell[data-theme="light"] .code-viewport,
+.vs-shell[data-theme="light"] .peek-definition,
+.vs-shell[data-theme="light"] .projects-editor,
+.vs-shell[data-theme="light"] .case-detail,
+.vs-shell[data-theme="light"] .contact-workspace,
+.vs-shell[data-theme="light"] .experience-editor,
+.vs-shell[data-theme="light"] .homelab-editor {
+  background: #f8f8f9 !important;
+  color: #252526;
+}
+
+.vs-shell[data-theme="light"] .document-tab {
+  border-color: #cfcfd2 !important;
+  background: #e7e7e8 !important;
+}
+
+.vs-shell[data-theme="light"] .code-line {
+  color: #1f1f20;
+}
+
+.vs-shell[data-theme="light"] .code-line.current-line {
+  background: #e5f1fb;
+}
+
+.vs-shell[data-theme="light"] .line-number {
+  color: #77777b;
+}
+
+.vs-shell[data-theme="light"] .peek-title,
+.vs-shell[data-theme="light"] .config-header,
+.vs-shell[data-theme="light"] .form-title,
+.vs-shell[data-theme="light"] .architecture-heading {
+  border-color: #cfcfd2;
+  background: #e9e9eb;
+  color: #353538;
+}
+
+.vs-shell[data-theme="light"] .peek-body h1,
+.vs-shell[data-theme="light"] .case-detail h1,
+.vs-shell[data-theme="light"] .contact-copy h1,
+.vs-shell[data-theme="light"] .page-hero h1,
+.vs-shell[data-theme="light"] .experience-profile h2,
+.vs-shell[data-theme="light"] .wiki-card h2 {
+  color: #202023;
+}
+
+.vs-shell[data-theme="light"] .peek-body > p,
+.vs-shell[data-theme="light"] .case-flow p,
+.vs-shell[data-theme="light"] .contact-copy > p,
+.vs-shell[data-theme="light"] .page-hero p,
+.vs-shell[data-theme="light"] .experience-profile p,
+.vs-shell[data-theme="light"] .achievement-card li p,
+.vs-shell[data-theme="light"] .wiki-card p {
+  color: #55555a;
+}
+
+.vs-shell[data-theme="light"] .case-list,
+.vs-shell[data-theme="light"] .case-flow section,
+.vs-shell[data-theme="light"] .contact-links > div,
+.vs-shell[data-theme="light"] .contact-links > a,
+.vs-shell[data-theme="light"] .contact-form,
+.vs-shell[data-theme="light"] .experience-profile,
+.vs-shell[data-theme="light"] .experience-card,
+.vs-shell[data-theme="light"] .architecture-panel,
+.vs-shell[data-theme="light"] .architecture-step article,
+.vs-shell[data-theme="light"] .wiki-card,
+.vs-shell[data-theme="light"] .tag-cloud b {
+  border-color: #cfcfd2;
+  background: #fff;
+  color: #343438;
+}
+
+.vs-shell[data-theme="light"] .case-list > button {
+  border-color: #d7d7da;
+  color: #4d4d52;
+}
+
+.vs-shell[data-theme="light"] .case-list > button:hover,
+.vs-shell[data-theme="light"] .case-list > button.selected {
+  background: #e7f1f8;
+}
+
+.vs-shell[data-theme="light"] .case-list > button strong,
+.vs-shell[data-theme="light"] .case-flow h2,
+.vs-shell[data-theme="light"] .contact-links strong,
+.vs-shell[data-theme="light"] .tag-cloud b,
+.vs-shell[data-theme="light"] .areas-card li {
+  color: #333337;
+}
+
+.vs-shell[data-theme="light"] .case-flow .case-effect,
+.vs-shell[data-theme="light"] .style-card strong,
+.vs-shell[data-theme="light"] .form-note.success {
+  border-color: #7ca88a;
+  background: #edf7ef;
+  color: #315e3d;
+}
+
+.vs-shell[data-theme="light"] .contact-form input,
+.vs-shell[data-theme="light"] .contact-form textarea {
+  border-color: #bfc0c3;
+  background: #fff;
+  color: #222;
+}
+
+.vs-shell[data-theme="light"] .form-note,
+.vs-shell[data-theme="light"] .case-code-signature {
+  background: #f0f0f1;
+  color: #4a4a4e;
+}
+
+.vs-shell[data-theme="light"] .output-console {
+  background: #fafafa;
+}
+
+.vs-shell[data-theme="light"] .theme-switch,
+.vs-shell[data-theme="light"] .locale-switch {
+  background: #fff;
+}
+
+.vs-shell[data-theme="light"] .theme-switch button,
+.vs-shell[data-theme="light"] .locale-switch button {
+  color: #5d4b70;
+}
+
+.vs-shell[data-theme="light"] .theme-switch button.active,
+.vs-shell[data-theme="light"] .locale-switch button.active {
+  background: #6b3fa0;
+  color: #fff;
+}
+
+@media (max-width: 1120px) {
+  .vs-menubar { grid-template-columns: 1fr minmax(220px, 330px) auto; }
+  .vs-workbench { grid-template-columns: 315px minmax(0, 1fr); }
+  .tfvc-workspace { display: none; }
+}
+
+@media (max-width: 680px) {
+  .vs-shell { grid-template-rows: 30px 40px 40px minmax(0, 1fr) 27px; font-size: 14px; }
+  .preference-controls { position: absolute; top: 35px; right: 8px; z-index: 4; }
+  .preference-controls .locale-switch { position: static; }
+  .theme-switch, .locale-switch { height: 27px; }
+  .theme-switch button, .locale-switch button { width: 33px; }
+  .editor-region { grid-template-rows: 30px minmax(0, 1fr) 132px; }
+  .editor-tabs { grid-template-rows: 39px minmax(0, 1fr); }
+  .document-tabs, .document-tab { height: 39px !important; }
+  .document-tab { min-width: 166px; font-size: 12px !important; }
+  .code-line { grid-template-columns: 46px minmax(0, 1fr); font-size: 13px; line-height: 24px; }
+  .vs-statusbar { font-size: 10.5px; }
+  .vs-statusbar > div:first-child span:last-child { display: none; }
+}
