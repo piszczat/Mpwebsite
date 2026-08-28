@@ -23,6 +23,14 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  {
+    files: ["app/page.tsx"],
+    rules: {
+      // The portfolio intentionally renders X++ XML-doc comments (///) as
+      // visible source-code text inside JSX.
+      "react/jsx-no-comment-textnodes": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

@@ -1,0 +1,79 @@
+name: Deploy Production
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to marcinp.com
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 20
+    env:
+      PROD_HOST: ${{ vars.PROD_HOST }}
+
+    steps:
+      - name: Validate deployment configuration
+        run: |
+          set -euo pipefail
+          test -n "${PROD_HOST}" || { echo 'PROD_HOST repository variable is not configured.' >&2; exit 1; }
+
+      - name: Verify SSH target
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "deploy@${PROD_HOST}" 'hostname && whoami'
+
+      - name: Deploy main to production
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "deploy@${PROD_HOST}" 'bash -se' <<'REMOTE'
+            set -euo pipefail
+            cd /opt/mpwebsite
+
+            git fetch --prune origin main
+            git checkout main
+            git reset --hard origin/main
+
+            npm ci
+            npm run build
+
+            sudo systemctl restart mpwebsite
+            sudo systemctl is-active mpwebsite
+
+            for attempt in 1 2 3 4 5; do
+              if curl --fail --silent --show-error --head http://127.0.0.1:3000 >/dev/null; then
+                exit 0
+              fi
+              sleep 2
+            done
+
+            echo 'Local health check failed after deployment.' >&2
+            exit 1
+          REMOTE
+
+      - name: Verify public endpoint
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if curl --fail --silent --show-error --head https://marcinp.com >/dev/null; then
+              echo 'Production health check passed.'
+              exit 0
+            fi
+            sleep 3
+          done
+
+          echo 'Public health check failed.' >&2
+          exit 1
