@@ -25,8 +25,15 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.base_ref }}
           HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
+
+          if [[ "${HEAD_REPOSITORY}" != "${BASE_REPOSITORY}" ]]; then
+            echo "Promotion PRs must originate from this repository (got ${HEAD_REPOSITORY})." >&2
+            exit 1
+          fi
 
           if [[ "${BASE_BRANCH}" == "test" && "${HEAD_BRANCH}" != "dev" ]]; then
             echo "PRs into test must come from dev (got ${HEAD_BRANCH})." >&2
@@ -38,7 +45,7 @@ jobs:
             exit 1
           fi
 
-          echo "Promotion path accepted: ${HEAD_BRANCH} -> ${BASE_BRANCH}"
+          echo "Promotion path accepted: ${HEAD_REPOSITORY}:${HEAD_BRANCH} -> ${BASE_BRANCH}"
 
       - name: Checkout
         uses: actions/checkout@v4
