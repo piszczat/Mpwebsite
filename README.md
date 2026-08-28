@@ -5,6 +5,8 @@ Interactive Microsoft Dynamics 365 Finance & Operations developer portfolio styl
 ## Included
 
 - Polish and English interface with a persistent language switch
+- Persistent Visual Studio-inspired dark/light colour theme
+- Readability-focused UI typography enlarged across the IDE workspace
 - Five anonymised D365 F&O case studies using the problem → solution → effect format
 - Payment portal API integration examples for Adyen and Stripe
 - Power Automate / Esker integration and custom X++ extension examples
@@ -12,6 +14,7 @@ Interactive Microsoft Dynamics 365 Finance & Operations developer portfolio styl
 - Recruitment-focused `/experience` page
 - Privacy-safe `/homelab` architecture page with a link to [ProxmoxWiki](https://github.com/piszczat/ProxmoxWiki)
 - Ctrl+K command palette (`about`, `projects`, `experience`, `contact`, `homelab`, `github`)
+- TFVC-style Visual Studio status bar rather than Git branch chrome
 - Server-side contact endpoint with honeypot, origin checks and validation
 - Runtime Cloudflare Web Analytics loader
 
