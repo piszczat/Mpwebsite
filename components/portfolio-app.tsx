@@ -14,6 +14,7 @@ import {
   CommandList, CommandShortcut,
 } from "@/components/ui/command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 
 type Locale = "en" | "pl";
 type Theme = "dark" | "light";
@@ -45,9 +46,15 @@ const copy = {
     contactIntro: "Send a short message about a D365 F&O role, integration or technical problem. The email address stays server-side.",
     name: "Name", email: "Email", company: "Company / team (optional)", subject: "Subject", message: "Message",
     send: "Send message", sending: "Sending...", sent: "Message sent. Thank you — I’ll reply soon.",
-    sendError: "The message could not be sent. Please try LinkedIn for now.", location: "Location",
+    sendError: "The message could not be sent. Please try again.", location: "Location",
     endpointReady: "JSON endpoint ready", nameError: "Enter at least 2 characters.", emailError: "Enter a valid email address.",
     subjectError: "Enter at least 3 characters.", messageError: "Enter at least 20 characters.",
+    securityCheck: "Security check", securityWaiting: "Complete the security check to send your message.",
+    securityError: "The security check could not load. Refresh the page and try again.",
+    configurationError: "The contact form is temporarily unavailable.",
+    rateLimitError: "Too many attempts. Please wait a moment and try again.",
+    serverError: "The message service is temporarily unavailable. Please try again shortly.",
+    networkError: "Could not reach the message service. Check your connection and try again.",
     output: "OUTPUT", problemsLabel: "PROBLEMS", terminal: "TERMINAL", analytics: "Analytics hook ready",
     commandTitle: "MarcinP Command Palette", commandDescription: "Navigate the portfolio or run a command",
     commandPlaceholder: "Type: about, projects, contact, github...", noCommand: "No matching portfolio command.",
@@ -76,9 +83,15 @@ const copy = {
     contactIntro: "Napisz krótko o roli D365 F&O, integracji albo problemie technicznym. Adres e-mail pozostaje po stronie serwera.",
     name: "Imię i nazwisko", email: "E-mail", company: "Firma / zespół (opcjonalnie)", subject: "Temat", message: "Wiadomość",
     send: "Wyślij wiadomość", sending: "Wysyłanie...", sent: "Wiadomość wysłana. Dziękuję — odpiszę wkrótce.",
-    sendError: "Nie udało się wysłać wiadomości. Na razie napisz przez LinkedIn.", location: "Lokalizacja",
+    sendError: "Nie udało się wysłać wiadomości. Spróbuj ponownie.", location: "Lokalizacja",
     endpointReady: "Endpoint JSON gotowy", nameError: "Wpisz co najmniej 2 znaki.", emailError: "Wpisz poprawny adres e-mail.",
     subjectError: "Wpisz co najmniej 3 znaki.", messageError: "Wpisz co najmniej 20 znaków.",
+    securityCheck: "Weryfikacja bezpieczeństwa", securityWaiting: "Ukończ weryfikację, aby wysłać wiadomość.",
+    securityError: "Nie udało się uruchomić weryfikacji. Odśwież stronę i spróbuj ponownie.",
+    configurationError: "Formularz kontaktowy jest chwilowo niedostępny.",
+    rateLimitError: "Zbyt wiele prób. Odczekaj chwilę i spróbuj ponownie.",
+    serverError: "Usługa wysyłania jest chwilowo niedostępna. Spróbuj ponownie za moment.",
+    networkError: "Nie udało się połączyć z usługą. Sprawdź internet i spróbuj ponownie.",
     output: "OUTPUT", problemsLabel: "PROBLEMY", terminal: "TERMINAL", analytics: "Hook Analytics gotowy",
     commandTitle: "Paleta poleceń MarcinP", commandDescription: "Przejdź do sekcji lub uruchom polecenie",
     commandPlaceholder: "Wpisz: o mnie, projekty, kontakt, github...", noCommand: "Brak pasującego polecenia.",
@@ -184,15 +197,33 @@ type ContactFormData = {
   subject: string;
   message: string;
   website?: string;
-  turnstileToken?: string;
 };
 
-const contactApiEndpoint = process.env.NEXT_PUBLIC_CONTACT_API_ENDPOINT?.trim() || "/api/contact";
+const contactApiEndpoint = process.env.NEXT_PUBLIC_CONTACT_API_ENDPOINT?.trim() || "";
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || "";
 
-function Contact({ locale }: { locale: Locale }) {
+type ContactError = "configuration" | "network" | "rate-limit" | "server" | "turnstile" | "generic";
+
+class ContactRequestError extends Error {
+  constructor(readonly reason: ContactError) {
+    super(reason);
+  }
+}
+
+function classifyContactError(status: number, backendError: unknown): ContactError {
+  const code = typeof backendError === "string" ? backendError.toLowerCase() : "";
+  if (status === 429 || code.includes("rate") || code.includes("limit")) return "rate-limit";
+  if (code.includes("turnstile") || code.includes("captcha") || code.includes("token")) return "turnstile";
+  if (status >= 500) return "server";
+  return "generic";
+}
+
+function Contact({ locale, theme }: { locale: Locale; theme: Theme }) {
   const t = copy[locale];
   const [state, setState] = useState<"idle" | "success" | "error">("idle");
-  const [startedAt, setStartedAt] = useState(0);
+  const [error, setError] = useState<ContactError | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileResetSignal, setTurnstileResetSignal] = useState(0);
   const schema = useMemo(() => z.object({
     name: z.string().trim().min(2, t.nameError).max(80),
     email: z.string().trim().email(t.emailError).max(160),
@@ -200,29 +231,64 @@ function Contact({ locale }: { locale: Locale }) {
     subject: z.string().trim().min(3, t.subjectError).max(160),
     message: z.string().trim().min(20, t.messageError).max(4000),
     website: z.string().max(200).optional(),
-    turnstileToken: z.string().optional(),
   }), [t]);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ContactFormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", company: "", subject: "", message: "", website: "", turnstileToken: "" },
+    defaultValues: { name: "", email: "", company: "", subject: "", message: "", website: "" },
   });
   const submit = async (values: ContactFormData) => {
     setState("idle");
+    setError(null);
+
+    if (values.website) {
+      reset();
+      setTurnstileResetSignal((value) => value + 1);
+      setState("success");
+      return;
+    }
+    if (!contactApiEndpoint || !turnstileSiteKey) {
+      setError("configuration");
+      setState("error");
+      return;
+    }
+    if (!turnstileToken) {
+      setError("turnstile");
+      setState("error");
+      return;
+    }
+
+    const payload = {
+      name: values.name.trim(),
+      email: values.email.trim(),
+      company: values.company?.trim() ?? "",
+      subject: values.subject.trim(),
+      message: values.message.trim(),
+      turnstileToken,
+    };
+
     try {
       const response = await fetch(contactApiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, turnstileToken: values.turnstileToken || "", startedAt }),
+        body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error();
+      const result = await response.json().catch(() => null) as { success?: unknown; error?: unknown } | null;
+      if (!response.ok || result?.success !== true) {
+        throw new ContactRequestError(classifyContactError(response.status, result?.error));
+      }
       reset();
-      setStartedAt(0);
+      setTurnstileResetSignal((value) => value + 1);
       setState("success");
-    } catch {
+    } catch (requestError) {
+      setTurnstileResetSignal((value) => value + 1);
+      setError(requestError instanceof ContactRequestError ? requestError.reason : "network");
       setState("error");
     }
   };
-  return <div className="editor-content contact-workspace"><article className="contact-copy"><span className="md-comment"># Contact.form — secure endpoint</span><h1>{t.contactHero}</h1><p>{t.contactIntro}</p><div className="contact-links"><div><MapPin /><span>{t.location}</span><strong>Derby, United Kingdom</strong></div><a href="https://www.linkedin.com/in/marcin-piszczatowski/" target="_blank" rel="noreferrer"><Network /><span>LinkedIn</span><strong>marcin-piszczatowski</strong><ExternalLink /></a><a href="https://github.com/piszczat" target="_blank" rel="noreferrer"><GitBranch /><span>GitHub</span><strong>@piszczat</strong><ExternalLink /></a></div></article><form className="contact-form" noValidate onFocus={() => { if (!startedAt) setStartedAt(Date.now()); }} onInput={() => { if (state !== "idle") setState("idle"); }} onSubmit={handleSubmit(submit)}><div className="form-title"><Terminal /><span>POST /api/contact</span><em>{t.endpointReady}</em></div><label><span>{t.name}</span><input {...register("name")} aria-invalid={Boolean(errors.name)} maxLength={80} autoComplete="name" />{errors.name && <small className="field-error">{errors.name.message}</small>}</label><label><span>{t.email}</span><input {...register("email")} aria-invalid={Boolean(errors.email)} type="email" maxLength={160} autoComplete="email" />{errors.email && <small className="field-error">{errors.email.message}</small>}</label><label><span>{t.company}</span><input {...register("company")} maxLength={120} autoComplete="organization" /></label><label><span>{t.subject}</span><input {...register("subject")} aria-invalid={Boolean(errors.subject)} maxLength={160} autoComplete="off" />{errors.subject && <small className="field-error">{errors.subject.message}</small>}</label><label><span>{t.message}</span><textarea {...register("message")} aria-invalid={Boolean(errors.message)} maxLength={4000} rows={6} />{errors.message && <small className="field-error">{errors.message.message}</small>}</label><label className="honeypot" aria-hidden="true"><span>Website</span><input {...register("website")} tabIndex={-1} autoComplete="off" /></label><input {...register("turnstileToken")} type="hidden" /><button type="submit" disabled={isSubmitting}>{isSubmitting ? t.sending : t.send} <ChevronRight /></button><div className="turnstile-slot" data-token-field="turnstileToken" aria-hidden="true" />{state === "success" && <p className="form-note success" role="status">{t.sent}</p>}{state === "error" && <p className="form-note error" role="alert">{t.sendError}</p>}</form></div>;
+  const errorMessage = error === "configuration" ? t.configurationError : error === "network" ? t.networkError : error === "rate-limit" ? t.rateLimitError : error === "server" ? t.serverError : error === "turnstile" ? t.securityError : t.sendError;
+  const endpointLabel = contactApiEndpoint.replace(/^https?:\/\//, "") || "contact endpoint";
+
+  return <div className="editor-content contact-workspace"><article className="contact-copy"><span className="md-comment"># Contact.form — secure endpoint</span><h1>{t.contactHero}</h1><p>{t.contactIntro}</p><div className="contact-links"><div><MapPin /><span>{t.location}</span><strong>Derby, United Kingdom</strong></div><a href="https://www.linkedin.com/in/marcin-piszczatowski/" target="_blank" rel="noreferrer"><Network /><span>LinkedIn</span><strong>marcin-piszczatowski</strong><ExternalLink /></a><a href="https://github.com/piszczat" target="_blank" rel="noreferrer"><GitBranch /><span>GitHub</span><strong>@piszczat</strong><ExternalLink /></a></div></article><form className="contact-form" noValidate onInput={() => { if (state !== "idle") { setState("idle"); setError(null); } }} onSubmit={handleSubmit(submit)}><div className="form-title"><Terminal /><span>POST {endpointLabel}</span><em>{t.endpointReady}</em></div><label><span>{t.name}</span><input {...register("name")} aria-invalid={Boolean(errors.name)} maxLength={80} autoComplete="name" />{errors.name && <small className="field-error">{errors.name.message}</small>}</label><label><span>{t.email}</span><input {...register("email")} aria-invalid={Boolean(errors.email)} type="email" maxLength={160} autoComplete="email" />{errors.email && <small className="field-error">{errors.email.message}</small>}</label><label><span>{t.company}</span><input {...register("company")} maxLength={120} autoComplete="organization" /></label><label><span>{t.subject}</span><input {...register("subject")} aria-invalid={Boolean(errors.subject)} maxLength={160} autoComplete="off" />{errors.subject && <small className="field-error">{errors.subject.message}</small>}</label><label><span>{t.message}</span><textarea {...register("message")} aria-invalid={Boolean(errors.message)} maxLength={4000} rows={6} />{errors.message && <small className="field-error">{errors.message.message}</small>}</label><label className="honeypot" aria-hidden="true"><span>Website</span><input {...register("website")} tabIndex={-1} autoComplete="off" /></label><div className="turnstile-panel"><span>{t.securityCheck}</span>{turnstileSiteKey ? <TurnstileWidget siteKey={turnstileSiteKey} theme={theme} language={locale} resetSignal={turnstileResetSignal} onToken={(token) => { setTurnstileToken(token); if (token && error === "turnstile") { setError(null); setState("idle"); } }} onError={() => { setTurnstileToken(""); setError("turnstile"); setState("error"); }} /> : <p>{t.configurationError}</p>}{turnstileSiteKey && !turnstileToken && state !== "error" && <small>{t.securityWaiting}</small>}</div><button type="submit" disabled={isSubmitting || !turnstileToken || !contactApiEndpoint || !turnstileSiteKey}>{isSubmitting ? t.sending : t.send} <ChevronRight /></button>{state === "success" && <p className="form-note success" role="status">{t.sent}</p>}{state === "error" && <p className="form-note error" role="alert">{errorMessage}</p>}</form></div>;
 }
 
 function Experience({ locale }: { locale: Locale }) {
@@ -246,7 +312,7 @@ export function PortfolioApp({ page }: { page: PageId }) {
     <div className="vs-menubar"><div className="menu-items">{["File", "Edit", "View", "Team", "Project", "Build", "Debug", "Tools", "Extensions", "Help"].map((x) => <span key={x}>{x}</span>)}</div><button className="ide-search" type="button" onClick={() => setPaletteOpen(true)}><Search size={13} /><span>{t.search}</span></button><div className="preference-controls"><div className="theme-switch" aria-label="Colour theme"><button type="button" className={theme === "dark" ? "active" : ""} title="Dark theme" onClick={() => setThemeMode("dark")}>◐</button><button type="button" className={theme === "light" ? "active" : ""} title="Light theme" onClick={() => setThemeMode("light")}>☀</button></div><div className="locale-switch" aria-label="Language"><button type="button" className={locale === "en" ? "active" : ""} onClick={() => setLanguage("en")}>EN</button><button type="button" className={locale === "pl" ? "active" : ""} onClick={() => setLanguage("pl")}>PL</button></div></div></div>
     <div className="vs-toolbar"><button className={`run-button ${build}`} type="button" onClick={() => void runBuild()} disabled={build === "building"}>{build === "success" ? <Check size={14} /> : <Play size={14} fill="currentColor" />}{build === "building" ? t.building : build === "success" ? t.built : t.start}</button><span className="toolbar-select">Release <ChevronDown size={12} /></span><span className="toolbar-select">Any CPU <ChevronDown size={12} /></span><span className="toolbar-divider" /><button type="button" className="toolbar-command" onClick={() => setPaletteOpen(true)}><Terminal size={14} /> {t.palette}</button><span className="analytics-chip"><CircleDot /> {t.analytics}</span></div>
     <div className="vs-workbench"><aside className="solution-panel"><div className="panel-title"><span>{t.explorer}</span><div className="panel-title-actions"><span>↻</span><span>▣</span><span>−</span></div></div><div className="solution-search"><Search /><span>{t.searchExplorer}</span></div><nav className="solution-tree application-tree"><div className="tree-row aot-root"><ChevronDown /><Boxes className="aot-root-icon" /><strong>{t.aot}</strong></div><TreeGroup label={t.classes} defaultOpen><Leaf code="C" label="MarcinPiszczat" /><Leaf code="C" label="EvidenceFirstDiagnostic" /><Leaf code="C" label="PaymentPortalService" /></TreeGroup><TreeGroup label={t.integrations} defaultOpen><Leaf code="API" label="AdyenPaymentContract" /><Leaf code="API" label="StripeWebhookContract" /><Leaf code="PA" label="EskerCustomerFlow" /></TreeGroup><TreeGroup label={t.tests}><Leaf code="T" label="PostingRegressionSuite" /><Leaf code="T" label="IntegrationContractTests" /></TreeGroup><TreeGroup label={t.web}><Leaf code="W" label="ContactEndpoint" /><Leaf code="W" label="AnalyticsLoader" /></TreeGroup><TreeGroup label={t.projectsNode} defaultOpen><div className="tree-row project-row"><ChevronDown /><Box className="project-icon" /><strong>MarcinP.Portfolio</strong></div>{docs.map((doc) => <button key={doc.id} className={`tree-row file-row ${page === "home" && view === doc.id ? "selected" : ""}`} type="button" onClick={() => goHome(doc.id)}><FileGlyph type={doc.icon} /><span>{doc.filename}</span></button>)}<a className={`tree-row file-row ${page === "experience" ? "selected" : ""}`} href="/experience"><FileGlyph type="md" /><span>{t.experienceFile}</span></a></TreeGroup></nav><div className="properties-panel"><div className="panel-title">{t.properties}</div><dl><div><dt>{t.file}</dt><dd>{activeFile}</dd></div><div><dt>{t.action}</dt><dd>Compile</dd></div><div><dt>{t.model}</dt><dd>MarcinPPortfolio</dd></div><div><dt>{t.layer}</dt><dd>USR</dd></div><div><dt>{t.status}</dt><dd className="property-ok">{t.ready}</dd></div></dl></div></aside>
-      <section className="editor-region"><div className="document-path"><span>MarcinP.Portfolio</span><ChevronRight /><span>{page === "home" ? `Portfolio / ${activeFile}` : `${page} / ${activeFile}`}</span></div>{page === "home" ? <Tabs value={view} onValueChange={(x) => goHome(x as HomeView)} className="editor-tabs"><TabsList className="document-tabs">{docs.map((doc) => <TabsTrigger key={doc.id} value={doc.id} className="document-tab"><FileGlyph type={doc.icon} /><span>{doc.filename}</span><X className="tab-close" /></TabsTrigger>)}</TabsList><div className="editor-canvas"><TabsContent value="about" className="editor-content-wrap"><About locale={locale} go={goHome} /></TabsContent><TabsContent value="projects" className="editor-content-wrap"><Projects locale={locale} /></TabsContent><TabsContent value="contact" className="editor-content-wrap"><Contact locale={locale} /></TabsContent></div></Tabs> : <div className="editor-tabs single-document"><div className="document-tabs"><div className="document-tab static active"><FileGlyph type="md" /><span>{activeFile}</span><X className="tab-close" /></div></div><div className="editor-canvas"><Experience locale={locale} /></div></div>}<section className="output-panel"><div className="output-tabs"><span>{t.problemsLabel} <b>0</b></span><span className="active">{t.output}</span><span>DEBUG CONSOLE</span><span>{t.terminal}</span><PanelBottom /></div><div className="output-console"><div className={`build-indicator ${build}`} /><div>{output.map((line, i) => <p key={`${line}-${i}`}>{line}</p>)}</div></div></section></section>
+      <section className="editor-region"><div className="document-path"><span>MarcinP.Portfolio</span><ChevronRight /><span>{page === "home" ? `Portfolio / ${activeFile}` : `${page} / ${activeFile}`}</span></div>{page === "home" ? <Tabs value={view} onValueChange={(x) => goHome(x as HomeView)} className="editor-tabs"><TabsList className="document-tabs">{docs.map((doc) => <TabsTrigger key={doc.id} value={doc.id} className="document-tab"><FileGlyph type={doc.icon} /><span>{doc.filename}</span><X className="tab-close" /></TabsTrigger>)}</TabsList><div className="editor-canvas"><TabsContent value="about" className="editor-content-wrap"><About locale={locale} go={goHome} /></TabsContent><TabsContent value="projects" className="editor-content-wrap"><Projects locale={locale} /></TabsContent><TabsContent value="contact" className="editor-content-wrap"><Contact locale={locale} theme={theme} /></TabsContent></div></Tabs> : <div className="editor-tabs single-document"><div className="document-tabs"><div className="document-tab static active"><FileGlyph type="md" /><span>{activeFile}</span><X className="tab-close" /></div></div><div className="editor-canvas"><Experience locale={locale} /></div></div>}<section className="output-panel"><div className="output-tabs"><span>{t.problemsLabel} <b>0</b></span><span className="active">{t.output}</span><span>DEBUG CONSOLE</span><span>{t.terminal}</span><PanelBottom /></div><div className="output-console"><div className={`build-indicator ${build}`} /><div>{output.map((line, i) => <p key={`${line}-${i}`}>{line}</p>)}</div></div></section></section>
     </div>
     <footer className="vs-statusbar"><div><span className="status-brand">MP</span><span className="tfvc-glyph">↔</span><strong>TFVC</strong><span className="tfvc-workspace">Workspace: MarcinP_DEV</span><span className="sync-icon">↻</span><Check /><span>Pending changes: 0</span></div><div><span>{locale.toUpperCase()}</span><span>{theme === "dark" ? "Dark" : "Light"}</span><span>UTF-8</span><span>CRLF</span><span>X++</span><Bell /></div></footer>
     <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen} title={t.commandTitle} description={t.commandDescription} className="vs-command-dialog"><CommandInput placeholder={t.commandPlaceholder} /><CommandList><CommandEmpty>{t.noCommand}</CommandEmpty><CommandGroup heading={t.navigate}><CommandItem onSelect={() => goHome("about")}><FileGlyph type="xpp" /><span>about — {t.about}</span><CommandShortcut>ABOUT</CommandShortcut></CommandItem><CommandItem onSelect={() => goHome("projects")}><FileGlyph type="json" /><span>projects — {t.projects}</span><CommandShortcut>PROJECTS</CommandShortcut></CommandItem><CommandItem onSelect={() => go("/experience")}><FileGlyph type="md" /><span>experience — {t.experience}</span><CommandShortcut>CV</CommandShortcut></CommandItem><CommandItem onSelect={() => goHome("contact")}><FileGlyph type="form" /><span>contact — {t.contact}</span><CommandShortcut>CONTACT</CommandShortcut></CommandItem></CommandGroup><CommandGroup heading={t.external}><CommandItem onSelect={() => window.open("https://github.com/piszczat/Mpwebsite", "_blank", "noopener,noreferrer")}><GitBranch /><span>github — Mpwebsite</span><CommandShortcut>GITHUB</CommandShortcut></CommandItem><CommandItem onSelect={() => window.open("https://www.linkedin.com/in/marcin-piszczatowski/", "_blank", "noopener,noreferrer")}><Network /><span>linkedin — Marcin Piszczatowski</span><CommandShortcut>LINKEDIN</CommandShortcut></CommandItem></CommandGroup><CommandGroup heading={t.run}><CommandItem onSelect={() => { setPaletteOpen(false); void runBuild(); }}><Play /><span>{t.buildSolution}</span><CommandShortcut>Ctrl+B</CommandShortcut></CommandItem></CommandGroup></CommandList></CommandDialog>
