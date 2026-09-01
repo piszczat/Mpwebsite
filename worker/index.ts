@@ -29,8 +29,10 @@ type ContactPayload = {
   name?: unknown;
   email?: unknown;
   company?: unknown;
+  subject?: unknown;
   message?: unknown;
   website?: unknown;
+  turnstileToken?: unknown;
   startedAt?: unknown;
 };
 
@@ -83,12 +85,14 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
   const name = normalise(payload.name, 80);
   const email = normalise(payload.email, 160);
   const company = normalise(payload.company, 120);
+  const subject = normalise(payload.subject, 160);
   const message = normalise(payload.message, 4000);
   const startedAt = typeof payload.startedAt === "number" ? payload.startedAt : 0;
   const elapsed = Date.now() - startedAt;
 
   if (
     name.length < 2 ||
+    subject.length < 3 ||
     message.length < 20 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
     elapsed < 1200 ||
@@ -120,7 +124,10 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
         name,
         email,
         company,
+        subject,
         message,
+        // Reserved for verification by the configured delivery Worker.
+        turnstileToken: normalise(payload.turnstileToken, 2048),
       }),
     });
     if (!response.ok) {
@@ -139,11 +146,12 @@ async function handleContact(request: Request, env: Env): Promise<Response> {
       from: env.CONTACT_FROM_EMAIL,
       to: [env.CONTACT_TO_EMAIL],
       reply_to: email,
-      subject: "Portfolio contact from " + name,
+      subject: "Portfolio contact: " + subject,
       text:
         "Name: " + name + "\n" +
         "Email: " + email + "\n" +
         "Company/team: " + (company || "—") + "\n" +
+        "Subject: " + subject + "\n" +
         "Submitted: " + submittedAt + "\n\n" +
         message,
     }),
