@@ -12,15 +12,18 @@ Interactive Microsoft Dynamics 365 Finance & Operations developer portfolio styl
 - Power Automate / Esker integration and custom X++ extension examples
 - Regression testing and release-confidence case study
 - Recruitment-focused `/experience` page
-- Privacy-safe `/homelab` architecture page with a link to [ProxmoxWiki](https://github.com/piszczat/ProxmoxWiki)
-- Ctrl+K command palette (`about`, `projects`, `experience`, `contact`, `homelab`, `github`)
+- Ctrl+K command palette (`about`, `projects`, `experience`, `contact`, `github`)
 - TFVC-style Visual Studio status bar rather than Git branch chrome
+- Contact form with client-side validation, subject, sending/success/error states and Turnstile-token support
+- Configurable JSON endpoint (`NEXT_PUBLIC_CONTACT_API_ENDPOINT`, default `/api/contact`)
 - Server-side contact endpoint with honeypot, origin checks and validation
 - Runtime Cloudflare Web Analytics loader
 
 ## Contact delivery
 
 The browser never receives the destination email address. Configure one of these server-side options:
+
+The frontend endpoint defaults to `/api/contact`. To point the form at a separate Cloudflare Worker, set `NEXT_PUBLIC_CONTACT_API_ENDPOINT`. This is a public URL only; keep every secret in the Worker environment. The request includes `turnstileToken` ready for future server-side Turnstile verification.
 
 ### Webhook
 
