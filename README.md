@@ -27,6 +27,8 @@ The frontend uses the already deployed Cloudflare endpoint. Copy `.env.example` 
 
 Both values are intentionally public browser configuration. The form sends exactly `name`, `email`, `company`, `subject`, `message` and `turnstileToken` as JSON. Turnstile secrets and email-provider credentials belong only in the separate backend Worker and must never be added to this repository.
 
+The same public values are committed in `.env.production` so the self-hosted production workflow always embeds them. A build-time environment variable with either name can still override the committed public default.
+
 The previous duplicate in-app email endpoint has been removed; `https://api.marcinp.com/contact` is the single contact backend.
 
 ## Analytics
