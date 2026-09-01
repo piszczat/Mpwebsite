@@ -1660,7 +1660,7 @@ button.tree-row {
   }
 }
 
-/* Portfolio v2: bilingual project, experience and homelab workspaces */
+/* Portfolio v2: bilingual project, experience and contact workspaces */
 
 a.tree-row {
   text-decoration: none;
@@ -1954,6 +1954,7 @@ a.tree-row {
 .contact-workspace {
   display: grid;
   grid-template-columns: minmax(420px, .9fr) minmax(420px, 1.1fr);
+  overflow: auto;
   background: radial-gradient(circle at 10% 15%, rgba(92,45,145,.15), transparent 36%), #1e1e1e;
 }
 
@@ -2109,6 +2110,19 @@ a.tree-row {
   box-shadow: inset 2px 0 #a274d0;
 }
 
+.contact-form input[aria-invalid="true"],
+.contact-form textarea[aria-invalid="true"] {
+  border-color: #f14c4c;
+}
+
+.field-error {
+  display: block;
+  margin-top: 5px;
+  color: #e69b9b;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .contact-form button {
   height: 36px;
   display: inline-flex;
@@ -2150,8 +2164,7 @@ a.tree-row {
 .form-note.success { border-color: #73c991; color: #b7d8c0; background: #222a24; }
 .form-note.error { border-color: #f14c4c; color: #e3b2b2; background: #2d2222; }
 
-.experience-editor,
-.homelab-editor {
+.experience-editor {
   padding: clamp(28px, 4vw, 58px);
   background: radial-gradient(circle at 90% 5%, rgba(92,45,145,.18), transparent 34%), #1e1e1e;
 }
@@ -2163,8 +2176,7 @@ a.tree-row {
 
 .page-hero > span,
 .experience-card > span,
-.experience-profile > span,
-.architecture-heading span {
+.experience-profile > span {
   color: #c586c0;
   font: 9px Consolas, "Cascadia Mono", monospace;
   letter-spacing: .09em;
@@ -2328,134 +2340,6 @@ a.tree-row {
   font-size: 9px;
 }
 
-.architecture-panel {
-  max-width: 1050px;
-  margin: 0 auto;
-  border: 1px solid #3c3c3c;
-  background: #202020;
-}
-
-.architecture-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 14px;
-  border-bottom: 1px solid #3a3a3a;
-  background: #292929;
-}
-
-.architecture-heading em {
-  color: #6a9955;
-  font: normal 8px Consolas, "Cascadia Mono", monospace;
-}
-
-.architecture-flow {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  padding: 28px;
-}
-
-.architecture-step {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 1fr 28px;
-  align-items: center;
-}
-
-.architecture-step:last-child {
-  grid-template-columns: 1fr;
-}
-
-.architecture-step article {
-  min-height: 138px;
-  padding: 17px;
-  border: 1px solid #474747;
-  background: #252526;
-}
-
-.architecture-step article > span {
-  color: #c586c0;
-  font: 8px Consolas, "Cascadia Mono", monospace;
-}
-
-.architecture-step h2 {
-  margin: 20px 0 10px;
-  color: #ddd;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.architecture-step p {
-  margin: 0;
-  color: #888;
-  font-size: 9px;
-  line-height: 1.5;
-}
-
-.flow-line {
-  height: 1px;
-  background: #745792;
-}
-
-.flow-line i {
-  display: block;
-  width: 5px;
-  height: 5px;
-  margin: -2px auto 0;
-  border-radius: 50%;
-  background: #c586c0;
-}
-
-.wiki-card {
-  max-width: 1050px;
-  display: block;
-  margin: 16px auto 50px;
-  padding: 24px;
-  border: 1px solid #4c3d60;
-  background: linear-gradient(135deg, #2a2232, #202020 62%);
-  color: inherit;
-  text-decoration: none;
-}
-
-.wiki-card > div {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #b58bd1;
-  font: 8px Consolas, "Cascadia Mono", monospace;
-  letter-spacing: .08em;
-}
-
-.wiki-card > div svg {
-  width: 15px;
-}
-
-.wiki-card h2 {
-  margin: 20px 0 10px;
-  color: #eee;
-  font-size: 25px;
-  font-weight: 400;
-}
-
-.wiki-card p {
-  margin: 0 0 20px;
-  color: #999;
-  font-size: 11px;
-}
-
-.wiki-card strong {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: #9cdcfe;
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.wiki-card strong svg {
-  width: 12px;
-}
-
 @media (max-width: 1180px) {
   .projects-editor { grid-template-columns: 290px minmax(0, 1fr); }
   .case-flow { grid-template-columns: 1fr; }
@@ -2463,10 +2347,6 @@ a.tree-row {
   .case-flow section { min-height: 0; }
   .contact-workspace { grid-template-columns: 1fr; overflow: auto; }
   .contact-copy { border-right: 0; border-bottom: 1px solid #363636; }
-  .architecture-flow { grid-template-columns: 1fr; gap: 0; }
-  .architecture-step { grid-template-columns: 1fr; }
-  .flow-line { width: 1px; height: 22px; margin: 0 auto; }
-  .flow-line i { margin: auto 0 auto -2px; }
 }
 
 @media (max-width: 900px) {
@@ -2485,10 +2365,9 @@ a.tree-row {
   .contact-copy h1 { font-size: 43px; }
   .contact-form { width: calc(100% - 28px); margin: 22px auto 45px; padding: 18px; }
   .form-title { margin: -18px -18px 18px; }
-  .experience-editor, .homelab-editor { padding: 34px 18px 60px; }
+  .experience-editor { padding: 34px 18px 60px; }
   .page-hero h1 { font-size: 43px; }
   .areas-card ul { grid-template-columns: 1fr; }
-  .architecture-flow { padding: 18px; }
 }
 
 /* Readability pass: small Visual Studio UI text is approximately 125% larger. */
@@ -2533,7 +2412,7 @@ a.tree-row {
 .case-flow p { font-size: 13.5px; }
 .case-code-signature { font-size: 13.5px; }
 .contact-copy > p, .page-hero p { font-size: 17px; }
-.contact-links span, .form-title, .page-hero > span, .experience-card > span, .experience-profile > span, .architecture-heading span { font-size: 10.5px; }
+.contact-links span, .form-title, .page-hero > span, .experience-card > span, .experience-profile > span { font-size: 10.5px; }
 .contact-links strong { font-size: 13.5px; }
 .contact-form label > span { font-size: 12.5px; }
 .contact-form input, .contact-form textarea { font-size: 15px; }
@@ -2546,11 +2425,8 @@ a.tree-row {
 .tag-cloud b { font-size: 11px; }
 .areas-card li { font-size: 12.5px; }
 .achievement-card li p { font-size: 12.5px; }
-.style-card strong, .wiki-card strong { font-size: 12.5px; }
-.style-card small, .architecture-step p { font-size: 11px; }
-.architecture-step article > span, .wiki-card > div { font-size: 10px; }
-.architecture-step h2 { font-size: 17px; }
-.wiki-card p { font-size: 13.5px; }
+.style-card strong { font-size: 12.5px; }
+.style-card small { font-size: 11px; }
 .output-tabs { font-size: 11.5px; }
 .output-console { font-size: 12.5px; }
 .vs-statusbar { font-size: 12.5px; }
@@ -2708,8 +2584,7 @@ a.tree-row {
 .vs-shell[data-theme="light"] .projects-editor,
 .vs-shell[data-theme="light"] .case-detail,
 .vs-shell[data-theme="light"] .contact-workspace,
-.vs-shell[data-theme="light"] .experience-editor,
-.vs-shell[data-theme="light"] .homelab-editor {
+.vs-shell[data-theme="light"] .experience-editor {
   background: #f8f8f9 !important;
   color: #252526;
 }
@@ -2733,8 +2608,7 @@ a.tree-row {
 
 .vs-shell[data-theme="light"] .peek-title,
 .vs-shell[data-theme="light"] .config-header,
-.vs-shell[data-theme="light"] .form-title,
-.vs-shell[data-theme="light"] .architecture-heading {
+.vs-shell[data-theme="light"] .form-title {
   border-color: #cfcfd2;
   background: #e9e9eb;
   color: #353538;
@@ -2744,8 +2618,7 @@ a.tree-row {
 .vs-shell[data-theme="light"] .case-detail h1,
 .vs-shell[data-theme="light"] .contact-copy h1,
 .vs-shell[data-theme="light"] .page-hero h1,
-.vs-shell[data-theme="light"] .experience-profile h2,
-.vs-shell[data-theme="light"] .wiki-card h2 {
+.vs-shell[data-theme="light"] .experience-profile h2 {
   color: #202023;
 }
 
@@ -2754,8 +2627,7 @@ a.tree-row {
 .vs-shell[data-theme="light"] .contact-copy > p,
 .vs-shell[data-theme="light"] .page-hero p,
 .vs-shell[data-theme="light"] .experience-profile p,
-.vs-shell[data-theme="light"] .achievement-card li p,
-.vs-shell[data-theme="light"] .wiki-card p {
+.vs-shell[data-theme="light"] .achievement-card li p {
   color: #55555a;
 }
 
@@ -2766,9 +2638,6 @@ a.tree-row {
 .vs-shell[data-theme="light"] .contact-form,
 .vs-shell[data-theme="light"] .experience-profile,
 .vs-shell[data-theme="light"] .experience-card,
-.vs-shell[data-theme="light"] .architecture-panel,
-.vs-shell[data-theme="light"] .architecture-step article,
-.vs-shell[data-theme="light"] .wiki-card,
 .vs-shell[data-theme="light"] .tag-cloud b {
   border-color: #cfcfd2;
   background: #fff;
