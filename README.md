@@ -14,29 +14,20 @@ Interactive Microsoft Dynamics 365 Finance & Operations developer portfolio styl
 - Recruitment-focused `/experience` page
 - Ctrl+K command palette (`about`, `projects`, `experience`, `contact`, `github`)
 - TFVC-style Visual Studio status bar rather than Git branch chrome
-- Contact form with client-side validation, subject, sending/success/error states and Turnstile-token support
-- Configurable JSON endpoint (`NEXT_PUBLIC_CONTACT_API_ENDPOINT`, default `/api/contact`)
-- Server-side contact endpoint with honeypot, origin checks and validation
+- Contact form with client-side validation, subject, sending/success/error states and Cloudflare Turnstile
+- Configurable external contact API and Turnstile widget using public `NEXT_PUBLIC_` variables
 - Runtime Cloudflare Web Analytics loader
 
-## Contact delivery
+## Contact configuration
 
-The browser never receives the destination email address. Configure one of these server-side options:
+The frontend uses the already deployed Cloudflare endpoint. Copy `.env.example` to an ignored environment file in local development or configure these variables in the production process:
 
-The frontend endpoint defaults to `/api/contact`. To point the form at a separate Cloudflare Worker, set `NEXT_PUBLIC_CONTACT_API_ENDPOINT`. This is a public URL only; keep every secret in the Worker environment. The request includes `turnstileToken` ready for future server-side Turnstile verification.
+- `NEXT_PUBLIC_CONTACT_API_ENDPOINT=https://api.marcinp.com/contact`
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAAEkP6VWd1WINmRTz`
 
-### Webhook
+Both values are intentionally public browser configuration. The form sends exactly `name`, `email`, `company`, `subject`, `message` and `turnstileToken` as JSON. Turnstile secrets and email-provider credentials belong only in the separate backend Worker and must never be added to this repository.
 
-- `CONTACT_WEBHOOK_URL`
-- `CONTACT_WEBHOOK_SECRET` (optional bearer token)
-
-### Resend
-
-- `RESEND_API_KEY`
-- `CONTACT_TO_EMAIL`
-- `CONTACT_FROM_EMAIL`
-
-Until one delivery option is configured, the form remains visible but safely disabled.
+The previous duplicate in-app email endpoint has been removed; `https://api.marcinp.com/contact` is the single contact backend.
 
 ## Analytics
 
